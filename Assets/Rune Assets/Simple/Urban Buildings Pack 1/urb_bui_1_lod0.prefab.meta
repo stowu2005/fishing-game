@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: b3d3a7ba5f4d42943920370ae1696723
+labels:
+- Architecture
+- Building
+- Urban
+- City
+- Town
+- House
+timeCreated: 1427654481
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: building
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 33563
+  packageName: Simple Urban Buildings Pack 1
+  packageVersion: 1.01
+  assetPath: Assets/Rune Assets/Simple/Urban Buildings Pack 1/urb_bui_1_lod0.prefab
+  uploadId: 58227

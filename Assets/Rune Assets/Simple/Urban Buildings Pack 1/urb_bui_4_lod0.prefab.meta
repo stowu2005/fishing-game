@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: d597a8fa6b192c545bbae896e4d42a21
+labels:
+- Building
+- Architecture
+- Town
+- City
+- Corner
+timeCreated: 1427654475
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 33563
+  packageName: Simple Urban Buildings Pack 1
+  packageVersion: 1.01
+  assetPath: Assets/Rune Assets/Simple/Urban Buildings Pack 1/urb_bui_4_lod0.prefab
+  uploadId: 58227

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 3cde5b30e88478d4d8cd7dc1af65c348
+timeCreated: 1428344509
+licenseType: Store
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 33563
+  packageName: Simple Urban Buildings Pack 1
+  packageVersion: 1.01
+  assetPath: Assets/Rune Assets/Simple/Urban Buildings Pack 1/runesimple.shader
+  uploadId: 58227
