@@ -23,22 +23,16 @@ public class FirstPersonController : MonoBehaviour {
     [Header("References")]
     public Transform cam;
 
-    // ── Private state ─────────────────────────────────────────────────────────
-
     private Rigidbody rb;
     private float verticalLookAngle;
-
     private Keyboard keyboard;
     private Mouse mouse;
-
-    // Smoothed delta accumulator
     private Vector2 smoothedDelta;
-
-    // ── Unity lifecycle ───────────────────────────────────────────────────────
 
     private void Awake() {
         rb = GetComponent<Rigidbody>();
         rb.freezeRotation = true;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
 
         keyboard = Keyboard.current;
         mouse = Mouse.current;
@@ -58,15 +52,16 @@ public class FirstPersonController : MonoBehaviour {
     }
 
     private void Update() {
-        HandleMouseLook();
         HandleCursorToggle();
+    }
+
+    private void LateUpdate() {
+        HandleMouseLook();
     }
 
     private void FixedUpdate() {
         HandleMovement();
     }
-
-    // ── Movement ──────────────────────────────────────────────────────────────
 
     private void HandleMovement() {
         if (keyboard == null) return;
@@ -92,34 +87,23 @@ public class FirstPersonController : MonoBehaviour {
         );
     }
 
-    // ── Mouse Look ────────────────────────────────────────────────────────────
-
     private void HandleMouseLook() {
         if (mouse == null || Cursor.lockState != CursorLockMode.Locked) return;
 
-        // Raw pixel delta this frame
         Vector2 rawDelta = mouse.delta.ReadValue();
-
-        // Exponential smoothing — blends toward raw input each frame.
-        // smoothedDelta approaches rawDelta faster when mouseSmoothing is high.
         smoothedDelta = Vector2.Lerp(smoothedDelta, rawDelta, mouseSmoothing);
 
-        // Apply sensitivity
         float mouseX = smoothedDelta.x * mouseSensitivityX;
         float mouseY = smoothedDelta.y * mouseSensitivityY;
 
-        // Horizontal → rotate player body
         transform.Rotate(Vector3.up * mouseX);
 
-        // Vertical → tilt camera only
         verticalLookAngle -= mouseY;
         verticalLookAngle = Mathf.Clamp(verticalLookAngle, -maxLookUp, maxLookDown);
 
         if (cam != null)
             cam.localRotation = Quaternion.Euler(verticalLookAngle, 0f, 0f);
     }
-
-    // ── Cursor Management ─────────────────────────────────────────────────────
 
     private void HandleCursorToggle() {
         if (keyboard == null) return;
