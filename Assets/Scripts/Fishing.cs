@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class BestFishing : MonoBehaviour {
+public class Fishing : MonoBehaviour {
     public Transform fishingRod;
     public GameObject bobberPrefab;
     public Transform castPoint;
