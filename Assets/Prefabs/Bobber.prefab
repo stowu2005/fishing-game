@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7646190454349507814}
   - component: {fileID: 6401711475304514927}
   - component: {fileID: 7951125840715166960}
+  - component: {fileID: 1325808436954191456}
   m_Layer: 0
   m_Name: Bobber
   m_TagString: Untagged
@@ -80,10 +81,29 @@ SphereCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Radius: 1
-  m_Center: {x: 0, y: 0.75, z: 0}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1325808436954191456
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3491376972465231745}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44ba4b0b19b8d2742ad863094b10b6b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Bobber
+  hasTarget: 0
+  waterDensity: 100
+  waterDrag: 2
+  nibbleStrength: 0.5
+  biteStrength: 2
+  bobberRadius: 0.1
+  bobberMass: 0.2
 --- !u!1 &5724192752769919156
 GameObject:
   m_ObjectHideFlags: 0

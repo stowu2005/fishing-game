@@ -23,6 +23,11 @@ public class FirstPersonController : MonoBehaviour {
     [Header("References")]
     public Transform cam;
 
+    // ── Controlled externally by Fishing.cs during the catch sequence ──
+    // HideInInspector keeps the Inspector tidy; set via script only.
+    [HideInInspector] public bool MovementEnabled = true;
+    [HideInInspector] public bool LookEnabled = true;
+
     private Rigidbody rb;
     private float verticalLookAngle;
     private Keyboard keyboard;
@@ -51,20 +56,21 @@ public class FirstPersonController : MonoBehaviour {
         mouse = Mouse.current;
     }
 
-    private void Update() {
-        HandleCursorToggle();
-    }
+    private void Update() { HandleCursorToggle(); }
+    private void LateUpdate() { HandleMouseLook(); }
+    private void FixedUpdate() { HandleMovement(); }
 
-    private void LateUpdate() {
-        HandleMouseLook();
-    }
-
-    private void FixedUpdate() {
-        HandleMovement();
-    }
+    // ─────────────────────────────── Movement ────────────────────────────────
 
     private void HandleMovement() {
         if (keyboard == null) return;
+
+        if (!MovementEnabled) {
+            // Smoothly bring the player to a halt while preserving gravity
+            Vector3 stopped = new Vector3(0f, rb.linearVelocity.y, 0f);
+            rb.linearVelocity = Vector3.Lerp(rb.linearVelocity, stopped, moveDamping * Time.fixedDeltaTime);
+            return;
+        }
 
         float inputX = 0f, inputZ = 0f;
 
@@ -78,7 +84,7 @@ public class FirstPersonController : MonoBehaviour {
 
         Vector3 worldDir = transform.TransformDirection(localDir);
         Vector3 targetVelocity = worldDir * moveSpeed;
-        targetVelocity.y = rb.linearVelocity.y;
+        targetVelocity.y = rb.linearVelocity.y;   // preserve vertical velocity (gravity)
 
         rb.linearVelocity = Vector3.Lerp(
             rb.linearVelocity,
@@ -87,8 +93,10 @@ public class FirstPersonController : MonoBehaviour {
         );
     }
 
+    // ─────────────────────────────── Mouse Look ──────────────────────────────
+
     private void HandleMouseLook() {
-        if (mouse == null || Cursor.lockState != CursorLockMode.Locked) return;
+        if (!LookEnabled || mouse == null || Cursor.lockState != CursorLockMode.Locked) return;
 
         Vector2 rawDelta = mouse.delta.ReadValue();
         smoothedDelta = Vector2.Lerp(smoothedDelta, rawDelta, mouseSmoothing);
@@ -104,6 +112,8 @@ public class FirstPersonController : MonoBehaviour {
         if (cam != null)
             cam.localRotation = Quaternion.Euler(verticalLookAngle, 0f, 0f);
     }
+
+    // ─────────────────────────────── Cursor ──────────────────────────────────
 
     private void HandleCursorToggle() {
         if (keyboard == null) return;
