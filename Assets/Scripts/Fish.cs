@@ -46,7 +46,11 @@ public class Fish : MonoBehaviour {
     private float biteTimer;
     private float escapeTimer;
 
-    // Added: Caught state so the catch coroutine in Fishing.cs can drive this transform freely
+    // FIX: tracks whether THIS fish is the one that set bobber.hasTarget = true.
+    // Prevents other fish from stealing the lock, and prevents obstacle bounces
+    // from resetting currentNibbleCount via a false "fresh lock-on" in CheckForBobber.
+    private bool isClaimingBobber = false;
+
     private enum FishState { Wandering, Approaching, BackingOff, Biting, Caught }
     private FishState currentState = FishState.Wandering;
 
@@ -56,6 +60,14 @@ public class Fish : MonoBehaviour {
     void Start() {
         lockedYLevel = transform.position.y;
         PickNewWanderTarget();
+    }
+
+    // FIX: if this fish is destroyed while holding the bobber lock, release it
+    // so the next fish can pick it up.
+    void OnDestroy() {
+        if (bobber != null && isClaimingBobber) {
+            bobber.hasTarget = false;
+        }
     }
 
     void Update() {
@@ -79,10 +91,19 @@ public class Fish : MonoBehaviour {
         }
     }
 
+    // FIX: unsubscribe any previous bobber's handlers before subscribing to the new
+    // one, preventing duplicate event registrations if AssignBobber is ever called
+    // more than once on the same fish instance.
     public void AssignBobber(Bobber newBobber) {
+        if (bobber != null) {
+            OnNibble -= bobber.HandleFishNibble;
+            OnBite -= bobber.HandleFishBite;
+        }
         bobber = newBobber;
-        OnNibble += bobber.HandleFishNibble;
-        OnBite += bobber.HandleFishBite;
+        if (bobber != null) {
+            OnNibble += bobber.HandleFishNibble;
+            OnBite += bobber.HandleFishBite;
+        }
     }
 
     public void RemoveBobber() {
@@ -90,9 +111,12 @@ public class Fish : MonoBehaviour {
         if (currentState == FishState.Caught) return;
 
         if (bobber != null) {
+            // FIX: only release hasTarget if we were the one who claimed it
+            if (isClaimingBobber) bobber.hasTarget = false;
             OnNibble -= bobber.HandleFishNibble;
             OnBite -= bobber.HandleFishBite;
         }
+        isClaimingBobber = false;
         bobber = null;
         ForceReturnToWandering();
     }
@@ -101,10 +125,13 @@ public class Fish : MonoBehaviour {
     // stops all AI behaviour and hands position control to the coroutine.
     public void SetCaughtMode() {
         if (bobber != null) {
+            // FIX: release the bobber lock so the slot isn't left permanently occupied
+            if (isClaimingBobber) bobber.hasTarget = false;
             OnNibble -= bobber.HandleFishNibble;
             OnBite -= bobber.HandleFishBite;
             bobber = null;
         }
+        isClaimingBobber = false;
         currentState = FishState.Caught;
         RollAndApplyFishType();
     }
@@ -140,7 +167,12 @@ public class Fish : MonoBehaviour {
         int terrainMask = LayerMask.GetMask("Terrain");
         if (Physics.SphereCast(transform.position, 0.5f, moveDirection, out RaycastHit hit, obstacleCheckDistance, terrainMask)) {
             if (currentState != FishState.Wandering) {
-                if (bobber != null) bobber.hasTarget = false;
+                // FIX: do NOT reset bobber.hasTarget here.
+                // The fish keeps its claim (isClaimingBobber stays true) and will
+                // re-enter Approaching next frame via CheckForBobber, preserving
+                // currentNibbleCount. Previously this reset hasTarget to false,
+                // which let other fish steal the slot AND caused CheckForBobber to
+                // treat the next approach as a fresh lock-on, resetting nibble count to 0.
                 ForceReturnToWandering();
             } else {
                 PickNewWanderTarget();
@@ -149,7 +181,13 @@ public class Fish : MonoBehaviour {
     }
 
     void CheckForBobber() {
-        if (bobber == null || bobber.hasTarget) return;
+        if (bobber == null) return;
+
+        // FIX: if another fish already claimed the bobber, do not steal it.
+        // The old code only checked bobber.hasTarget, but hasTarget could be
+        // momentarily false (e.g. after an obstacle bounce) even while a fish
+        // was in the middle of an approach-nibble cycle, allowing a steal.
+        if (bobber.hasTarget && !isClaimingBobber) return;
 
         float xzDist = Vector2.Distance(
             new Vector2(transform.position.x, transform.position.z),
@@ -157,9 +195,22 @@ public class Fish : MonoBehaviour {
         );
 
         if (xzDist <= biteDetectionRange) {
-            bobber.hasTarget = true;
-            currentNibbleCount = 0;
+            if (!bobber.hasTarget) {
+                // Genuine fresh lock-on: claim the slot and reset the nibble count.
+                currentNibbleCount = 0;
+                bobber.hasTarget = true;
+                isClaimingBobber = true;
+            }
+            // Either fresh lock-on, or recovering after an obstacle detour.
+            // In the recovery case bobber.hasTarget is already true and
+            // isClaimingBobber is already true, so currentNibbleCount is untouched.
             currentState = FishState.Approaching;
+        } else if (isClaimingBobber) {
+            // We wandered beyond detection range while holding the lock.
+            // Release it so a closer fish can take over rather than locking
+            // the bobber indefinitely.
+            bobber.hasTarget = false;
+            isClaimingBobber = false;
         }
     }
 
@@ -182,7 +233,7 @@ public class Fish : MonoBehaviour {
             // Fire the first dunk immediately, then start the repeating interval
             OnBite?.Invoke();
             biteTimer = bitePulseInterval;
-            escapeTimer = maxBiteDuration; // Reset the escape timer
+            escapeTimer = maxBiteDuration;
         } else {
             currentNibbleCount++;
 
@@ -235,9 +286,11 @@ public class Fish : MonoBehaviour {
 
     void EscapeFromBobber() {
         if (bobber != null) {
-            bobber.hasTarget = false; // Allow other fish to potentially target the bobber again
+            bobber.hasTarget = false; // Allow other fish to target the bobber again
         }
-        RemoveBobber(); // Disconnects events and goes back to wandering state
+        isClaimingBobber = false;   // FIX: clear claim before RemoveBobber so it
+                                    // doesn't try to reset hasTarget a second time
+        RemoveBobber();             // Disconnects events and goes back to wandering state
     }
 
     void PickNewWanderTarget() {

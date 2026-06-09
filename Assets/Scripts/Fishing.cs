@@ -217,6 +217,14 @@ public class Fishing : MonoBehaviour {
         orbitYaw = 0f;
         orbitPitch = 0f;
         caughtFishObject.transform.rotation = cam.rotation * Quaternion.Euler(0f, -90f, 0f);
+
+        Fish fishScript = fish.GetComponent<Fish>();
+        if (fishScript != null && fishScript.CaughtType != null) {
+            if (FishingUIManager.Instance != null) {
+                // Passes the fish name and its scale factor (X component) 
+                FishingUIManager.Instance.OnFishCaught(fishScript.CaughtType.name, fish.transform.localScale.x);
+            }
+        }
     }
 
     void handleFishOrbit() {
@@ -252,5 +260,16 @@ public class Fishing : MonoBehaviour {
     void clearFishingLine() {
         FishingLine line = FindFirstObjectByType<FishingLine>();
         if (line != null) line.bobber = null;
+    }
+
+    public void ResetCast() {
+        if (status == Status.castOut) {
+            status = Status.idle;
+            if (bobber != null) {
+                Destroy(bobber);
+                bobber = null;
+            }
+            clearFishingLine();
+        }
     }
 }

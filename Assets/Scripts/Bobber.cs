@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))] // Automatically ensures an AudioSource is attached
 public class Bobber : MonoBehaviour {
     [HideInInspector] public bool hasTarget = false;
 
@@ -13,11 +14,19 @@ public class Bobber : MonoBehaviour {
     public float bobberRadius = 0.2f;
     public float bobberMass = 0.1f;
 
+    [Header("Audio Settings")]
+    public AudioClip waterSplashClip;
+    public float standardMultiplier;
+    public float nibbleMultiplier;
+    public float biteMultiplier;
+
     private GameObject waterPlane;
     private Rigidbody rb;
+    private AudioSource audioSource;
     private float originalAirDrag;
     private float bobberVolume;
     private bool bitten;
+    private bool hasHitWater = false; // Tracks if the splash sound already played
 
     void Start() {
         rb = GetComponent<Rigidbody>();
@@ -25,6 +34,9 @@ public class Bobber : MonoBehaviour {
             rb.mass = bobberMass;
             originalAirDrag = rb.linearDamping;
         }
+
+        // Get or add the AudioSource component
+        audioSource = GetComponent<AudioSource>();
 
         bobberVolume = (4f / 3f) * Mathf.PI * Mathf.Pow(bobberRadius, 3f);
 
@@ -50,6 +62,11 @@ public class Bobber : MonoBehaviour {
         float displacementMultiplier = GetSubmergedVolumeMultiplier(currentWaterLevel);
 
         if (displacementMultiplier > 0f) {
+            // ─── AUDIO HOOK: WATER SPLASH ───
+            if (!hasHitWater) {
+                hasHitWater = true;
+                PlaySound(standardMultiplier);
+            }
 
             float displacedVolume = bobberVolume * displacementMultiplier;
             Vector3 buoyancyForce = -Physics.gravity.normalized * (waterDensity * displacedVolume * Physics.gravity.magnitude);
@@ -59,6 +76,7 @@ public class Bobber : MonoBehaviour {
             rb.AddForce(viscousDragForce, ForceMode.Force);
         } else {
             rb.linearDamping = originalAirDrag;
+            hasHitWater = false; // Reset if it gets pulled completely out of water
         }
     }
 
@@ -73,15 +91,43 @@ public class Bobber : MonoBehaviour {
         return Mathf.Clamp01(capVolume / bobberVolume);
     }
 
+    // ─── AUDIO HOOK: FISH NIBBLE ───
     public void HandleFishNibble() {
         if (rb != null) {
             rb.AddForce(Vector3.down * nibbleStrength, ForceMode.Impulse);
         }
+        PlaySound(nibbleMultiplier);
     }
 
+    // ─── AUDIO HOOK: FISH BITE ───
     public void HandleFishBite() {
         if (rb != null) {
             rb.AddForce(Vector3.down * biteStrength, ForceMode.Impulse);
+        }
+        PlaySound(biteMultiplier);
+    }
+
+    private void PlaySound(float volumeMultiplier) {
+        if (audioSource != null) {
+            audioSource.PlayOneShot(waterSplashClip, volumeMultiplier);
+        }
+    }
+
+    void OnCollisionEnter(Collision collision) {
+        if (collision.gameObject.CompareTag("Player") ||
+            collision.gameObject.GetComponentInParent<FirstPersonController>() != null ||
+            collision.gameObject.CompareTag("InvisibleWall") ||
+            collision.gameObject.CompareTag("Fish")) {
+            return;
+        }
+
+        float currentWaterLevel = waterPlane != null ? waterPlane.transform.position.y : 0f;
+
+        if (transform.position.y >= currentWaterLevel - bobberRadius) {
+            Fishing fishingSystem = FindFirstObjectByType<Fishing>();
+            if (fishingSystem != null) {
+                fishingSystem.ResetCast();
+            }
         }
     }
 }

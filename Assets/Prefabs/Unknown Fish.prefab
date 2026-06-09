@@ -143,18 +143,38 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   obstacleCheckDistance: 2
-  realBiteChance: 0.3
+  realBiteChance: 0.35
   biteDetectionRange: 4
   backOffDistance: 2.5
   minNibblesBeforeBite: 1
-  maxNibblesBeforeBite: 5
-  maxBiteDuration: 0.6
+  maxNibblesBeforeBite: 4
+  maxBiteDuration: 1
   struggleSpeed: 5
   struggleAmount: 0.7
   bitePulseInterval: 1.5
   fishTypes:
   - name: Goldfish
-    prefab: {fileID: 4565407064621050664, guid: e756a278a20da448d8f5460d680038b6, type: 3}
-    weight: 1
+    prefab: {fileID: 4565407064621050664, guid: 12cd0b4dbf0e10441824b42cfc3c6956, type: 3}
+    weight: 5
     minSizeMultiplier: 0.5
-    maxSizeMultiplier: 3
+    maxSizeMultiplier: 1.5
+  - name: Limefish
+    prefab: {fileID: 4565407064621050664, guid: 3f844fc143864c8448b0917249e29805, type: 3}
+    weight: 4
+    minSizeMultiplier: 0.4
+    maxSizeMultiplier: 0.75
+  - name: Mattefish
+    prefab: {fileID: 4565407064621050664, guid: e756a278a20da448d8f5460d680038b6, type: 3}
+    weight: 3
+    minSizeMultiplier: 1
+    maxSizeMultiplier: 1.5
+  - name: Bigfish
+    prefab: {fileID: 4565407064621050664, guid: f2566c1c569407e459f2b8559e359028, type: 3}
+    weight: 2
+    minSizeMultiplier: 2.75
+    maxSizeMultiplier: 3.5
+  - name: RareFish
+    prefab: {fileID: 8432680429921248625, guid: ec958aba2f7b4854db2b9be819df4b83, type: 3}
+    weight: 1
+    minSizeMultiplier: 1
+    maxSizeMultiplier: 1.5
